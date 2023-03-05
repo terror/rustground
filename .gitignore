@@ -1,7 +1,4 @@
 /.DS_Store
-notes
-
-
-# Added by cargo
-
 /target
+node_modules
+notes
