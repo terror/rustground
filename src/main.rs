@@ -3,17 +3,22 @@ use {
     arguments::Arguments, fetcher::Fetcher, index::Index, loader::Loader, options::Options,
     server::Server, subcommand::Subcommand,
   },
-  anyhow::Error,
+  anyhow::anyhow,
+  axum::{
+    extract::{Extension, Query},
+    http::StatusCode,
+    response::IntoResponse,
+    routing::get,
+    Json, Router,
+  },
+  axum_server::Handle,
   clap::Parser,
   crates_io_api::{Crate, CratesQueryBuilder, SyncClient},
-  std::{
-    collections::BTreeMap,
-    fs,
-    path::PathBuf,
-    process,
-    sync::{Arc, Mutex},
-    time::Duration,
-  },
+  elasticsearch::{indices::IndicesCreateParts, Elasticsearch, IndexParts, SearchParts},
+  http::Method,
+  serde::{Deserialize, Serialize},
+  std::{fs, net::SocketAddr, path::PathBuf, process, sync::Arc, time::Duration, time::Instant},
+  tower_http::cors::{Any, CorsLayer},
 };
 
 mod arguments;
@@ -26,7 +31,7 @@ mod subcommand;
 
 const USER_AGENT: &str = "rustground";
 
-type Result<T = (), E = Error> = std::result::Result<T, E>;
+type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
 fn main() {
   env_logger::init();
