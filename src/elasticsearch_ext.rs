@@ -1,7 +1,7 @@
 use super::*;
 
 #[async_trait]
-pub(crate) trait ElasticSearchExt {
+pub(crate) trait ElasticsearchExt {
   async fn create_index<T: Serialize + Send>(&self, index_id: &str, body: T) -> Result<Response>;
   async fn has_document(&self, index_id: &str, document_id: &str) -> Result<bool>;
   async fn has_index(&self, index_id: &str) -> Result<bool>;
@@ -15,7 +15,7 @@ pub(crate) trait ElasticSearchExt {
 }
 
 #[async_trait]
-impl ElasticSearchExt for Elasticsearch {
+impl ElasticsearchExt for Elasticsearch {
   async fn create_index<T: Serialize + Send>(&self, index_id: &str, body: T) -> Result<Response> {
     Ok(
       self

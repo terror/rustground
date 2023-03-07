@@ -1,6 +1,6 @@
 use {
   crate::{
-    arguments::Arguments, elasticsearch_ext::ElasticSearchExt, fetcher::Fetcher, index::Index,
+    arguments::Arguments, elasticsearch_ext::ElasticsearchExt, fetcher::Fetcher, index::Index,
     loader::Loader, options::Options, server::Server, subcommand::Subcommand,
   },
   anyhow::anyhow,
