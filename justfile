@@ -11,6 +11,9 @@ build:
 clippy:
   cargo clippy --all-targets --all-features
 
+container:
+  docker-compose up -d
+
 fmt:
   cargo fmt
   prettier --write .

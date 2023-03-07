@@ -4,17 +4,10 @@ pub(crate) struct Index {
   client: Elasticsearch,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct SearchResult {
-  packages: Vec<Crate>,
-  score: f32,
-  total: usize,
-}
-
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct SearchPayload {
   pub(crate) time: f64,
-  pub(crate) results: SearchResult,
+  pub(crate) results: serde_json::Value,
 }
 
 impl Index {
@@ -97,6 +90,8 @@ impl Index {
 
       thread::sleep(Duration::from_millis(50));
     }
+
+    log::info!("Finished indexing packages.");
 
     Ok(())
   }
