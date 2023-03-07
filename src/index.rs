@@ -4,10 +4,17 @@ pub(crate) struct Index {
   client: Elasticsearch,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct SearchResult {
+  packages: Vec<Crate>,
+  score: f32,
+  total: usize,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct SearchPayload {
   pub(crate) time: f64,
-  pub(crate) packages: Vec<serde_json::Value>,
+  pub(crate) results: SearchResult,
 }
 
 impl Index {
@@ -34,8 +41,8 @@ impl Index {
           "repository": { "type": "text" },
           "downloads": { "type": "long" },
           "recent_downloads": { "type": "long" },
-          "categories": { "type": "keyword" },
-          "keywords": { "type": "keyword" },
+          "categories": { "type": "array" },
+          "keywords": { "type": "array" },
           "versions": { "type": "long" },
           "max_version": { "type": "text" },
           "max_stable_version": { "type": "text" },
@@ -56,22 +63,8 @@ impl Index {
       }
     });
 
-    if !self
-      .client
-      .indices()
-      .exists(IndicesExistsParts::Index(&[Index::INDEX_ID]))
-      .send()
-      .await?
-      .status_code()
-      .is_success()
-    {
-      let response = self
-        .client
-        .indices()
-        .create(IndicesCreateParts::Index(Index::INDEX_ID))
-        .body(mapping)
-        .send()
-        .await?;
+    if !self.client.has_index(Index::INDEX_ID).await? {
+      let response = self.client.create_index(Index::INDEX_ID, mapping).await?;
 
       if response.status_code() != StatusCode::OK {
         return Err(anyhow!("Failed to create index: {:?}", response));
@@ -81,25 +74,21 @@ impl Index {
     log::info!("Index created, writing packages...");
 
     for package in serde_json::from_str::<Vec<Crate>>(&fs::read_to_string(source)?)? {
-      log::info!("Writing package: {}...", package.name);
+      log::trace!("Checking package: {}...", package.name);
 
       if self
         .client
-        .get(GetParts::IndexId(Index::INDEX_ID, &package.id))
-        .send()
+        .has_document(Index::INDEX_ID, &package.id)
         .await?
-        .status_code()
-        .is_success()
       {
-        log::info!("Document {} already exists in index...", package.name);
         continue;
       }
 
+      log::trace!("Writing package: {}...", package.name);
+
       let response = self
         .client
-        .index(IndexParts::IndexId(Index::INDEX_ID, &package.id))
-        .body(serde_json::to_value(&package)?)
-        .send()
+        .index_document(Index::INDEX_ID, &package.id, &package)
         .await?;
 
       if response.status_code() != StatusCode::CREATED {
@@ -115,21 +104,20 @@ impl Index {
   pub(crate) async fn search(&self, query: &str) -> Result<SearchPayload> {
     log::info!("Received query: {query}");
 
-    let body = serde_json::json!({
-      "query": {
-        "query_string": {
-          "query": query
-        }
-      }
-    });
-
     let now = Instant::now();
 
     let response = self
       .client
-      .search(SearchParts::Index(&[Index::INDEX_ID]))
-      .body(body)
-      .send()
+      .query(
+        Index::INDEX_ID,
+        serde_json::json!({
+          "query": {
+            "query_string": {
+              "query": query
+            }
+          }
+        }),
+      )
       .await?;
 
     let elapsed = f64::trunc((now.elapsed().as_secs_f64() * 1000.0) * 100.0) / 100.0;
@@ -140,7 +128,7 @@ impl Index {
 
     Ok(SearchPayload {
       time: elapsed,
-      packages: response.json().await?,
+      results: response.json().await?,
     })
   }
 }

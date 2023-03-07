@@ -1,7 +1,7 @@
 use {
   crate::{
-    arguments::Arguments, fetcher::Fetcher, index::Index, loader::Loader, options::Options,
-    server::Server, subcommand::Subcommand,
+    arguments::Arguments, elasticsearch_ext::ElasticSearchExt, fetcher::Fetcher, index::Index,
+    loader::Loader, options::Options, server::Server, subcommand::Subcommand,
   },
   anyhow::anyhow,
   axum::{
@@ -14,17 +14,21 @@ use {
   clap::Parser,
   crates_io_api::{Crate, CratesQueryBuilder, SyncClient},
   elasticsearch::{
+    http::response::Response,
     http::transport::Transport,
     indices::{IndicesCreateParts, IndicesExistsParts},
-    Elasticsearch, IndexParts, SearchParts, GetParts
+    Elasticsearch, GetParts, IndexParts, SearchParts,
   },
   http::Method,
   serde::{Deserialize, Serialize},
-  std::{fs, net::SocketAddr, path::PathBuf, process, sync::Arc, time::Duration, time::Instant, thread},
+  std::{
+    fs, net::SocketAddr, path::PathBuf, process, sync::Arc, thread, time::Duration, time::Instant,
+  },
   tower_http::cors::{Any, CorsLayer},
 };
 
 mod arguments;
+mod elasticsearch_ext;
 mod fetcher;
 mod index;
 mod loader;
