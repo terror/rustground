@@ -4,6 +4,7 @@ use {
     loader::Loader, options::Options, server::Server, subcommand::Subcommand,
   },
   anyhow::anyhow,
+  async_trait::async_trait,
   axum::{
     extract::{Extension, Query},
     http::StatusCode,
@@ -22,8 +23,10 @@ use {
   http::Method,
   serde::{Deserialize, Serialize},
   std::{
-    fs, net::SocketAddr, path::PathBuf, process, sync::Arc, thread, time::Duration, time::Instant,
+    fs, marker::Send, net::SocketAddr, path::PathBuf, process, sync::Arc, thread, time::Duration,
+    time::Instant,
   },
+  tokio::runtime::Runtime,
   tower_http::cors::{Any, CorsLayer},
 };
 

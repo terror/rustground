@@ -21,9 +21,7 @@ impl Fetcher {
     loop {
       log::info!("Fetching crates from page {page}...");
 
-      let mut query = CratesQueryBuilder::new()
-        .page_size(page_size.into())
-        .build();
+      let mut query = CratesQueryBuilder::new().page_size(page_size).build();
 
       query.set_page(page);
 

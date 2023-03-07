@@ -11,8 +11,6 @@ pub(crate) struct Params {
   pub(crate) query: String,
 }
 
-use tokio::runtime::Runtime;
-
 impl Server {
   pub(crate) fn run(self, source: PathBuf) -> Result {
     Runtime::new()?.block_on(async move {

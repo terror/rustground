@@ -1,8 +1,5 @@
 use super::*;
 
-use async_trait::async_trait;
-use std::marker::Send;
-
 #[async_trait]
 pub(crate) trait ElasticSearchExt {
   async fn create_index<T: Serialize + Send>(&self, index_id: &str, body: T) -> Result<Response>;
