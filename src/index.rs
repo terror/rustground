@@ -105,6 +105,8 @@ impl Index {
       if response.status_code() != StatusCode::CREATED {
         return Err(anyhow!("Failed to index document: {:?}", response));
       }
+
+      thread::sleep(Duration::from_millis(50));
     }
 
     Ok(())
