@@ -11,10 +11,13 @@ use {
     routing::get,
     Json, Router,
   },
-  axum_server::Handle,
   clap::Parser,
   crates_io_api::{Crate, CratesQueryBuilder, SyncClient},
-  elasticsearch::{indices::IndicesCreateParts, Elasticsearch, IndexParts, SearchParts},
+  elasticsearch::{
+    http::transport::Transport,
+    indices::{IndicesCreateParts, IndicesExistsParts},
+    Elasticsearch, IndexParts, SearchParts, GetParts
+  },
   http::Method,
   serde::{Deserialize, Serialize},
   std::{fs, net::SocketAddr, path::PathBuf, process, sync::Arc, time::Duration, time::Instant},

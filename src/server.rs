@@ -16,7 +16,9 @@ use tokio::runtime::Runtime;
 impl Server {
   pub(crate) fn run(self, source: PathBuf) -> Result {
     Runtime::new()?.block_on(async move {
-      let index = Arc::new(Index::open());
+      log::info!("Initializing index...");
+
+      let index = Arc::new(Index::open()?);
 
       let clone = index.clone();
 

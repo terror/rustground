@@ -13,59 +13,87 @@ pub(crate) struct SearchPayload {
 impl Index {
   const INDEX_ID: &str = "package-index";
 
-  pub(crate) fn open() -> Self {
-    Self {
-      client: Elasticsearch::default(),
-    }
+  pub(crate) fn open() -> Result<Self> {
+    Ok(Self {
+      client: Elasticsearch::new(Transport::single_node("http://localhost:9200")?),
+    })
   }
 
   pub(crate) async fn index(&self, source: PathBuf) -> Result {
     log::info!("Building elasticsearch index...");
 
     let mapping = serde_json::json!({
-      "properties": {
-        "id": {"type": "keyword"},
-        "name": {"type": "text"},
-        "description": {"type": "text"},
-        "license": {"type": "keyword"},
-        "documentation": {"type": "text"},
-        "homepage": {"type": "text"},
-        "repository": {"type": "text"},
-        "downloads": {"type": "long"},
-        "recent_downloads": {"type": "long"},
-        "categories": {"type": "keyword"},
-        "keywords": {"type": "keyword"},
-        "versions": {"type": "long"},
-        "max_version": {"type": "keyword"},
-        "max_stable_version": {"type": "keyword"},
-        "links": {
-          "properties": {
-            "version_downloads": {"type": "long"},
-            "versions": {"type": "keyword"}
-          }
-        },
-        "created_at": {"type": "date"},
-        "updated_at": {"type": "date"},
-        "exact_match": {"type": "boolean"}
+      "mappings": {
+        "properties": {
+          "id": { "type": "keyword" },
+          "name": { "type": "text" },
+          "description": { "type": "text" },
+          "license": { "type": "text" },
+          "documentation": { "type": "text" },
+          "homepage": { "type": "text" },
+          "repository": { "type": "text" },
+          "downloads": { "type": "long" },
+          "recent_downloads": { "type": "long" },
+          "categories": { "type": "keyword" },
+          "keywords": { "type": "keyword" },
+          "versions": { "type": "long" },
+          "max_version": { "type": "text" },
+          "max_stable_version": { "type": "text" },
+          "links": {
+            "properties": {
+              "owner_team": { "type": "text" },
+              "owner_user": { "type": "text" },
+              "owners": { "type": "text" },
+              "reverse_dependencies": { "type": "text" },
+              "version_downloads": { "type": "text" },
+              "versions": { "type": "text" }
+            }
+          },
+          "created_at": { "type": "date" },
+          "updated_at": { "type": "date" },
+          "exact_match": { "type": "boolean" }
+        }
       }
     });
 
-    let response = self
+    if !self
       .client
       .indices()
-      .create(IndicesCreateParts::Index(Index::INDEX_ID))
-      .body(mapping)
+      .exists(IndicesExistsParts::Index(&[Index::INDEX_ID]))
       .send()
-      .await?;
+      .await?
+      .status_code()
+      .is_success()
+    {
+      let response = self
+        .client
+        .indices()
+        .create(IndicesCreateParts::Index(Index::INDEX_ID))
+        .body(mapping)
+        .send()
+        .await?;
 
-    if response.status_code() != StatusCode::CREATED {
-      return Err(anyhow!("Failed to create index: {:?}", response));
+      if response.status_code() != StatusCode::OK {
+        return Err(anyhow!("Failed to create index: {:?}", response));
+      }
     }
 
     log::info!("Index created, writing packages...");
 
     for package in serde_json::from_str::<Vec<Crate>>(&fs::read_to_string(source)?)? {
       log::info!("Writing package: {}...", package.name);
+
+      if self
+        .client
+        .get(GetParts::IndexId(Index::INDEX_ID, &package.id))
+        .send()
+        .await?
+        .status_code()
+        .is_success()
+      {
+        log::info!("Document {} already exists in index...", package.name);
+        continue;
+      }
 
       let response = self
         .client
