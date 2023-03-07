@@ -17,6 +17,7 @@ container:
 fmt:
   cargo fmt
   prettier --write .
+  prettier --write client/**/*.svelte
 
 fmt-check:
   cargo fmt --all -- --check
