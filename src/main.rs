@@ -1,7 +1,8 @@
 use {
   crate::{
     arguments::Arguments, elasticsearch_ext::ElasticsearchExt, fetcher::Fetcher, index::Index,
-    loader::Loader, options::Options, server::Server, subcommand::Subcommand,
+    loader::Loader, options::Options, response_ext::ResponseExt, server::Server,
+    subcommand::Subcommand,
   },
   anyhow::anyhow,
   async_trait::async_trait,
@@ -21,10 +22,11 @@ use {
     Elasticsearch, GetParts, IndexParts, SearchParts,
   },
   http::Method,
+  lazy_static::lazy_static,
   serde::{Deserialize, Serialize},
+  serde_json::{json, Value},
   std::{
     fs, marker::Send, net::SocketAddr, path::PathBuf, process, sync::Arc, thread, time::Duration,
-    time::Instant,
   },
   tokio::runtime::Runtime,
   tower_http::cors::{Any, CorsLayer},
@@ -36,6 +38,7 @@ mod fetcher;
 mod index;
 mod loader;
 mod options;
+mod response_ext;
 mod server;
 mod subcommand;
 

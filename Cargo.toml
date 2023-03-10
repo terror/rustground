@@ -12,7 +12,9 @@ clap = { version = "4.1.8", features = ["derive"] }
 crates_io_api = "0.8.1"
 elasticsearch = "8.5.0-alpha.1"
 env_logger = "0.10.0"
+futures = "0.3.26"
 http = "0.2.9"
+lazy_static = "1.4.0"
 log = "0.4.17"
 redis = "0.22.3"
 serde = { version = "1.0.152", features = ["derive"] }
