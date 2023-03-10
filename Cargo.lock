@@ -1075,7 +1075,6 @@ dependencies = [
  "crates_io_api",
  "elasticsearch",
  "env_logger",
- "futures",
  "http",
  "lazy_static",
  "log",
