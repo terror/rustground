@@ -1,5 +1,7 @@
 export RUST_LOG := 'info'
 
+alias f := fmt
+
 default:
   just --list
 
@@ -28,6 +30,9 @@ run *args:
 
 test:
   cargo test
+
+serve:
+  cargo run -- --source=crates.json serve
 
 watch +COMMAND='test':
   cargo watch --clear --exec "{{COMMAND}}"
