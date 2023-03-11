@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
   import * as monaco from 'monaco-editor';
-
+  import { HSplitPane, VSplitPane } from 'svelte-split-pane';
   import { onMount } from 'svelte';
 
   const languageConfig = {
@@ -40,6 +40,8 @@
     }
   }
 
+  let currStatus = {};
+
   async function runCode() {
     console.log(`Running code: ${code}...`);
 
@@ -51,7 +53,6 @@
           source_code: code,
           language_id: languageConfig.id,
           stdin: '',
-          expected_output: '',
           cpu_time_limit: 2,
           wall_time_limit: 5,
           memory_limit: 128000,
@@ -76,20 +77,19 @@
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      if (status.description === 'Accepted') console.log(status.stdout);
-      else console.error(status.compile_output || status.stderr);
+      currStatus = status;
     } catch (error) {
       console.error(error);
     }
   }
 </script>
 
-<main>
-  <h1 class="font-bold text-md text-center bg-slate-50 p-1">
+<main class="bg-slate-50 h-screen overflow-hidden">
+  <h1 class="font-bold text-md text-center p-1">
     <a href="/">rustground 🛝<a /></a>
   </h1>
-  <div class="flex flex-row bg-slate-50 rounded-lg">
-    <div class="flex flex-col w-2/4">
+  <HSplitPane minLeftPaneSize="25%" minRightPaneSize="25%">
+    <div slot="left">
       <div class="items-center m-2">
         <label for="simple-search" class="sr-only">Search</label>
         <div class="relative w-full">
@@ -127,14 +127,19 @@
             </div>
           {/each}
         {/if}
+        <button
+          class="bg-blue-100 text-black font-bold mt-2 py-2 px-4 rounded-lg w-full"
+          on:click={runCode}
+        >
+          Run
+        </button>
       </div>
-      <button
-        class="bg-blue-100 text-black font-bold ml-2 mr-2 py-2 px-4 rounded-lg"
-        on:click={runCode}
-      >
-        Run
-      </button>
     </div>
-    <div bind:this={container} class="w-screen h-screen" />
-  </div>
+    <div slot="right" class="h-full">
+      <VSplitPane minDownPaneSize="25%" minTopPaneSize="25%">
+        <div slot="top" bind:this={container} class="h-full w-full" />
+        <div slot="down">{JSON.stringify(currStatus)}</div>
+      </VSplitPane>
+    </div>
+  </HSplitPane>
 </main>
