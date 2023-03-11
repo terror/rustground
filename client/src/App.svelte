@@ -3,17 +3,22 @@
 
   import { onMount } from 'svelte';
 
-  let container;
+  const languageConfig = {
+    id: 73,
+    name: 'rust',
+  };
 
-  let code = 'fn main() {\n  println!("Hello, world!"); \n}';
-
-  let error = '';
+  let container,
+    code = 'fn main() {\n  println!("Hello, world!"); \n}',
+    error = '';
 
   onMount(() => {
     let editor = monaco.editor.create(container, {
       value: code,
-      language: 'rust',
-      theme: 'vs-dark',
+      language: languageConfig.name,
+      fontSize: '16px',
+      automaticLayout: true,
+      overviewRulerLanes: 0,
     });
 
     editor.onDidChangeModelContent(() => {
@@ -21,9 +26,8 @@
     });
   });
 
-  let query = '';
-
-  let data = null;
+  let query = '',
+    data = null;
 
   async function handleInput(event) {
     try {
@@ -45,7 +49,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source_code: code,
-          language_id: 73,
+          language_id: languageConfig.id,
           stdin: '',
           expected_output: '',
           cpu_time_limit: 2,
@@ -54,10 +58,9 @@
         }),
       });
 
-      const submission = await response.json();
-      const submissionId = submission.token;
+      const id = (await response.json()).token;
 
-      console.log(submissionId);
+      console.log(id);
 
       let status = { description: 'Queue' };
 
@@ -65,60 +68,73 @@
         status.description !== 'Accepted' &&
         status.description !== 'Compilation Error'
       ) {
-        const result = await fetch(`/judge/submissions/${submissionId}`);
+        const result = await fetch(`/judge/submissions/${id}`);
         const data = await result.json();
         console.log(data);
         status = data.status;
         console.log(status);
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second before checking again
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      if (status.description === 'Accepted') {
-        const output = status.stdout;
-        console.log(output);
-      } else {
-        const error = status.compile_output || status.stderr;
-        console.error(error);
-      }
+      if (status.description === 'Accepted') console.log(status.stdout);
+      else console.error(status.compile_output || status.stderr);
     } catch (error) {
       console.error(error);
     }
   }
 </script>
 
-<main class="m-2 h-screen">
-  <h1 class="font-bold">rustground 🛝</h1>
-
-  <label>
-    search crates: <input
-      class="border border-sky-500"
-      type="text"
-      bind:value={query}
-      on:input={handleInput}
-    />
-  </label>
-
-  {#if data}
-    <!-- <p>{JSON.stringify(data.results.hits.hits)}</p> -->
-    {#each data.results.hits.hits as item}
-      <div class="border border-sky-500 m-2">
-        <p>Name: {item._id}</p>
-        <p>Description: {item._source.description}</p>
+<main>
+  <h1 class="font-bold text-md text-center bg-slate-50 p-1">
+    <a href="/">rustground 🛝<a /></a>
+  </h1>
+  <div class="flex flex-row bg-slate-50 rounded-lg">
+    <div class="flex flex-col w-2/4">
+      <div class="items-center m-2">
+        <label for="simple-search" class="sr-only">Search</label>
+        <div class="relative w-full">
+          <div
+            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+          >
+            <svg
+              aria-hidden="true"
+              class="w-5 h-5 text-gray-500 dark:text-gray-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              ><path
+                fill-rule="evenodd"
+                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                clip-rule="evenodd"
+              /></svg
+            >
+          </div>
+          <input
+            type="text"
+            id="simple-search"
+            class="w-full pl-10 p-2.5 rounded-lg"
+            placeholder="Search crates"
+            bind:value={query}
+            on:input={handleInput}
+          />
+        </div>
+        {#if error} <p>{error}</p> {/if}
+        {#if data}
+          {#each data.hits.hits as item}
+            <div class="border border-sky-500 m-2">
+              <p>Name: {item._id}</p>
+              <p>Description: {item._source.description}</p>
+            </div>
+          {/each}
+        {/if}
       </div>
-    {/each}
-    <!-- <p>{JSON.stringify(data)}</p> -->
-  {/if}
-
-  {#if error}
-    <p>{error}</p>
-  {/if}
-
-  <div bind:this={container} class="h-3/6 mt-2" />
-
-  <button
-    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
-    on:click={runCode}
-  >
-    Run
-  </button>
+      <button
+        class="bg-slate-50 text-black font-bold py-2 px-4 rounded-lg w-full"
+        on:click={runCode}
+      >
+        Run
+      </button>
+    </div>
+    <div bind:this={container} class="w-screen h-screen" />
+  </div>
 </main>
