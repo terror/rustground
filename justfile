@@ -10,11 +10,11 @@ all: build test clippy fmt-check
 build:
   cargo build
 
+client:
+  npm run dev
+
 clippy:
   cargo clippy --all-targets --all-features
-
-container:
-  docker-compose up -d
 
 fmt:
   cargo fmt
@@ -31,8 +31,11 @@ run *args:
 test:
   cargo test
 
-serve:
+server:
   cargo run -- --source=crates.json serve
+
+services:
+  docker-compose up -d
 
 watch +COMMAND='test':
   cargo watch --clear --exec "{{COMMAND}}"

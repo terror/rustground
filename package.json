@@ -18,6 +18,7 @@
     "vite": "^4.1.0"
   },
   "dependencies": {
+    "@fontsource/inter": "^4.5.15",
     "monaco-editor": "^0.36.1"
   }
 }

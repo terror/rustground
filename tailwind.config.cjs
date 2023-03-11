@@ -1,11 +1,10 @@
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 module.exports = {
   content: ['./client/**/*.{html,js,svelte,ts}'],
   theme: {
     fontFamily: {
-      sans: [
-        'Inter var, sans-serif',
-        { fontFeatureSettings: '"cv11", "ss01"' },
-      ],
+      sans: ['Inter', ...defaultTheme.fontFamily.sans],
     },
   },
   plugins: [],

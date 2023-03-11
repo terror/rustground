@@ -121,15 +121,15 @@
         {#if error} <p>{error}</p> {/if}
         {#if data}
           {#each data.hits.hits as item}
-            <div class="border border-sky-500 m-2">
-              <p>Name: {item._id}</p>
-              <p>Description: {item._source.description}</p>
+            <div class="border border-blue-100 mt-2 rounded-lg p-2">
+              <p class="font-bold">{item._id}</p>
+              <p>{item._source.description}</p>
             </div>
           {/each}
         {/if}
       </div>
       <button
-        class="bg-slate-50 text-black font-bold py-2 px-4 rounded-lg w-full"
+        class="bg-blue-100 text-black font-bold ml-2 mr-2 py-2 px-4 rounded-lg"
         on:click={runCode}
       >
         Run
